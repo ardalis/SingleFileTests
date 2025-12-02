@@ -184,11 +184,11 @@ public class FailureDemonstration
 }
 
 // ============================================================================
-// Example: Testing an External Assembly
+// Example: Testing an External Project
 // ============================================================================
-// To test types from an external assembly:
-// 1. Add an #:assembly reference at the top of this file
-// 2. Create test classes below that use types from that assembly
+// To test types from an external project:
+// 1. Add a #:project reference at the top of this file
+// 2. Create test classes below that use types from that project
 //
 // Example:
 // public class CalculatorAdd
@@ -202,4 +202,4 @@ public class FailureDemonstration
 // }
 //
 // The test runner will discover and run all tests defined in THIS file,
-// even if they test types from external assemblies.
+// even if they test types from external projects.

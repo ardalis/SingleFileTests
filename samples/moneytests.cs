@@ -10,12 +10,13 @@ using Xunit;
 using Xunit.Runners;
 
 // ============================================================================
-// Test Runner
+// Test Runner (Top-level statements must come before type declarations)
 // ============================================================================
 
+// Use Environment.ProcessPath for single-file apps (Assembly.Location returns empty string)
 var assemblyPath = Environment.ProcessPath!;
 
-Console.WriteLine("Discovering and running Money tests...\n");
+Console.WriteLine("Discovering and running tests...\n");
 
 var runner = AssemblyRunner.WithoutAppDomain(assemblyPath);
 
@@ -72,35 +73,40 @@ runner.OnExecutionComplete = info => tcs.SetResult(true);
 
 runner.Start();
 await tcs.Task;
-await Task.Delay(100);
+await Task.Delay(100); // Allow runner to transition to idle state before disposal
 runner.Dispose();
 
 var duration = DateTime.Now - startTime;
 
+// Display results
 Console.WriteLine($"\nTest run completed in {duration.TotalSeconds:F2}s");
 Console.WriteLine($"Total tests: {passed + failed + skipped}");
 
 if (passed > 0)
 {
     Console.ForegroundColor = ConsoleColor.Green;
-    Console.WriteLine($"  Passed: {passed}");
+    Console.Write($"  Passed: {passed}");
     Console.ResetColor();
+    Console.WriteLine();
 }
 
 if (failed > 0)
 {
     Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine($"  Failed: {failed}");
+    Console.Write($"  Failed: {failed}");
     Console.ResetColor();
+    Console.WriteLine();
 }
 
 if (skipped > 0)
 {
     Console.ForegroundColor = ConsoleColor.Yellow;
-    Console.WriteLine($"  Skipped: {skipped}");
+    Console.Write($"  Skipped: {skipped}");
     Console.ResetColor();
+    Console.WriteLine();
 }
 
+// Exit with appropriate code for CI/CD integration
 return failed > 0 ? 1 : 0;
 
 // ============================================================================
