@@ -4,8 +4,7 @@
 // This version uses the Ardalis.SingleFileTestRunner NuGet package
 // which provides the test runner plumbing.
 //
-#:package Ardalis.SingleFileTestRunner@0.1.0
-#:package xunit@2.9.2
+#:package Ardalis.SingleFileTestRunner@0.4.0
 #:project ../src/ValueObjects
 
 using Ardalis.SingleFileTestRunner;
