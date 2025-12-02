@@ -48,3 +48,19 @@ Total tests: 8
   Passed: 8
 ```
 
+## Using in GitHub Actions
+
+You can run single file test apps in GitHub actions as long as you're on .NET 10 or later. Just use the `dotnet run <filename.cs>` syntax as shown here:
+
+```yaml
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Run template tests
+      run: dotnet run samples/_template.cs
+```
+
+See also [examples in .github\workflows](.github/workflows/).
