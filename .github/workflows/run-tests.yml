@@ -21,3 +21,12 @@ jobs:
 
     - name: Run template tests
       run: dotnet run samples/_template.cs
+
+    - name: Run money tests
+      run: dotnet run samples/moneytests.cs
+
+    - name: Run money tests (TestFile library)
+      run: dotnet run samples/moneytests2.cs
+
+    - name: Run money tests (NuGet package)
+      run: dotnet run samples/moneytests3.cs
