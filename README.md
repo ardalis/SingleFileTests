@@ -48,6 +48,32 @@ Total tests: 8
   Passed: 8
 ```
 
+### moneytests.cs
+
+This sample demonstrates how to test an external project using the `#:project` directive. It tests the `Money` value object from the included `ValueObjects` library located in `/src/ValueObjects`.
+
+Run the sample:
+
+```powershell
+cd samples
+dotnet run moneytests.cs
+```
+
+Expected output:
+
+```powershell
+Discovering and running Money tests...
+
+  [PASS] MoneyArithmetic.AddsTwoMoneyValuesWithSameCurrency
+  [PASS] MoneyConstruction.CreatesMoneyWithAmountAndCurrency
+  [PASS] MoneyEquality.EqualWhenSameAmountAndCurrency
+  ... (25 tests total)
+
+Test run completed in 0.18s
+Total tests: 25
+  Passed: 25
+```
+
 ## Using in GitHub Actions
 
 You can run single file test apps in GitHub actions as long as you're on .NET 10 or later. Just use the `dotnet run <filename.cs>` syntax as shown here:

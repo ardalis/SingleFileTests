@@ -5,11 +5,11 @@
 #:package xunit@2.9.2
 #:package xunit.runner.utility@2.9.2
 //
-// Assembly references use the #:assembly syntax (reference assemblies to test):
-// #:assembly ./bin/Debug/net9.0/MyProject.dll
-// #:assembly ../MyLibrary/bin/Debug/net9.0/MyLibrary.dll
+// Project references use the #:project syntax (reference projects to test):
+// #:project ../path/to/MyProject
+// #:project ../MyLibrary
 //
-// Note: Uncomment and update the #:assembly lines above to reference assemblies
+// Note: Uncomment and update the #:project lines above to reference projects
 // containing types you want to test. The tests themselves are defined in this file.
 
 using Xunit;
