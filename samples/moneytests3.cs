@@ -1,10 +1,11 @@
-// Single-file xUnit test suite for Money value object
+// Single-file xUnit v3 test suite for Money value object
 // Run with: dotnet run moneytests3.cs
 //
-// This version uses the Ardalis.SingleFileTestRunner NuGet package
+// This version uses the Ardalis.SingleFileTestRunner.xUnitV3 NuGet package
 // which provides the test runner plumbing.
 //
-#:package Ardalis.SingleFileTestRunner@0.4.0
+#:package Ardalis.SingleFileTestRunner.xUnitV3@1.0.0
+#:package xunit.v3@3.2.1
 #:project ../src/ValueObjects
 
 using Ardalis.SingleFileTestRunner;
