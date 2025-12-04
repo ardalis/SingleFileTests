@@ -1,42 +1,77 @@
-// Single-file xUnit test suite for Money value object
+// Single-file xUnit v3 test suite for Money value object
 // Run with: dotnet run moneytests.cs
 //
-#:package xunit@2.9.2
-#:package xunit.runner.utility@2.9.2
+#:package xunit.v3@3.2.1
+#:package xunit.v3.runner.inproc.console@3.2.1
 #:project ../src/ValueObjects
 
 using ValueObjects;
 using Xunit;
-using Xunit.Runners;
+using Xunit.Runner.Common;
+using Xunit.Runner.InProc.SystemConsole;
+using Xunit.Sdk;
+using System.Reflection;
 
 // ============================================================================
 // Test Runner (Top-level statements must come before type declarations)
 // ============================================================================
 
-// Use Environment.ProcessPath for single-file apps (Assembly.Location returns empty string)
-var assemblyPath = Environment.ProcessPath!;
+// Use Environment.ProcessPath for single-file apps (Assembly.Location returns empty string).
+// For test scenarios under test hosts, ProcessPath points to the test host, not the test DLL.
+// Use Assembly.Location as fallback only if ProcessPath is not a DLL.
+var processPath = Environment.ProcessPath!;
+
+// For dotnet run, the executable is a .dll or .exe with corresponding .dll
+string assemblyPath;
+if (processPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+{
+    assemblyPath = processPath;
+}
+else if (processPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+{
+    // Convert .exe to .dll path (dotnet produces both)
+    assemblyPath = Path.ChangeExtension(processPath, ".dll");
+}
+else
+{
+    // Single-file compilation - try to find a dll with same name
+    assemblyPath = processPath + ".dll";
+}
 
 Console.WriteLine("Discovering and running tests...\n");
-
-var runner = AssemblyRunner.WithoutAppDomain(assemblyPath);
 
 int passed = 0, failed = 0, skipped = 0;
 var startTime = DateTime.Now;
 var consoleLock = new object();
 
-runner.OnTestFailed = info =>
+// Track test display names using test unique IDs
+var testNameMap = new Dictionary<string, string>();
+
+var sink = new TestMessageSink();
+
+// Track test names as they start
+sink.Execution.TestStartingEvent += args =>
+{
+    testNameMap[args.Message.TestUniqueID] = args.Message.TestDisplayName;
+};
+
+sink.Execution.TestFailedEvent += args =>
 {
     lock (consoleLock)
     {
         failed++;
+        var testName = testNameMap.TryGetValue(args.Message.TestUniqueID, out var name) ? name : "Unknown test";
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("  [FAIL] ");
         Console.ResetColor();
-        Console.WriteLine(info.TestDisplayName);
-        Console.WriteLine($"         {info.ExceptionMessage}");
-        if (!string.IsNullOrEmpty(info.ExceptionStackTrace))
+        Console.WriteLine(testName);
+        if (args.Message.Messages != null && args.Message.Messages.Length > 0 && args.Message.Messages[0] != null)
         {
-            foreach (var line in info.ExceptionStackTrace.Split('\n'))
+            Console.WriteLine($"         {args.Message.Messages[0]}");
+        }
+        if (args.Message.StackTraces != null && args.Message.StackTraces.Length > 0 && args.Message.StackTraces[0] != null && !string.IsNullOrEmpty(args.Message.StackTraces[0]))
+        {
+            foreach (var line in args.Message.StackTraces[0]!.Split('\n'))
             {
                 Console.WriteLine($"         {line}");
             }
@@ -44,37 +79,50 @@ runner.OnTestFailed = info =>
     }
 };
 
-runner.OnTestPassed = info =>
+sink.Execution.TestPassedEvent += args =>
 {
     lock (consoleLock)
     {
         passed++;
+        var testName = testNameMap.TryGetValue(args.Message.TestUniqueID, out var name) ? name : "Unknown test";
         Console.ForegroundColor = ConsoleColor.Green;
         Console.Write("  [PASS] ");
         Console.ResetColor();
-        Console.WriteLine(info.TestDisplayName);
+        Console.WriteLine(testName);
     }
 };
 
-runner.OnTestSkipped = info =>
+sink.Execution.TestSkippedEvent += args =>
 {
     lock (consoleLock)
     {
         skipped++;
+        var testName = testNameMap.TryGetValue(args.Message.TestUniqueID, out var name) ? name : "Unknown test";
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.Write("  [SKIP] ");
         Console.ResetColor();
-        Console.WriteLine($"{info.TestDisplayName} - {info.SkipReason}");
+        Console.WriteLine($"{testName} - {args.Message.Reason}");
     }
 };
 
-var tcs = new TaskCompletionSource<bool>();
-runner.OnExecutionComplete = info => tcs.SetResult(true);
+// Run tests using ConsoleRunnerInProcess
+var cts = new CancellationTokenSource();
+#pragma warning disable IL2026 // Assembly.LoadFrom is required for test discovery
+var assembly = Assembly.LoadFrom(assemblyPath);
+#pragma warning restore IL2026
 
-runner.Start();
-await tcs.Task;
-await Task.Delay(100); // Allow runner to transition to idle state before disposal
-runner.Dispose();
+// Create XunitProjectAssembly for the test assembly
+var project = new XunitProject();
+var targetFramework = assembly.GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>()?.FrameworkName 
+    ?? $".NETCoreApp,Version=v{Environment.Version.Major}.{Environment.Version.Minor}";
+var metadata = new AssemblyMetadata(3, targetFramework); // xUnit v3
+var projectAssembly = new XunitProjectAssembly(project, assemblyPath, metadata)
+{
+    Assembly = assembly,
+    ConfigFileName = null,
+};
+
+await ConsoleRunnerInProcess.Run(sink, sink.Diagnostics, projectAssembly, cts);
 
 var duration = DateTime.Now - startTime;
 
